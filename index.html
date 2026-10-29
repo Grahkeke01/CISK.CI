@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SGDS – Portail</title>
+<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1e5e2f">
+<link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SGDS">
+<style>
+:root{--g:#1e5e2f;--l:#e6f5e1;--b:#1769c9;--o:#e08a00}
+*{box-sizing:border-box}body{margin:0;font-family:"Segoe UI",system-ui,sans-serif;color:#1d2b20;background:#fff}
+.bar{background:var(--g);color:#fff;display:grid;grid-template-columns:20% 40% 40%;align-items:center;padding:6px 10px;position:sticky;top:0;z-index:5}
+.bar .t{font-weight:700;text-align:center;font-size:clamp(.7rem,2vw,1.1rem)}
+.bar .u{text-align:right;font-size:clamp(.7rem,1.8vw,.95rem)}.bar .u small{display:block;opacity:.85;font-size:.8em}
+.ham{background:none;border:0;color:#fff;font-size:1.7rem;cursor:pointer}
+.band{height:40px;display:flex;justify-content:flex-end;align-items:center;gap:10px;padding:0 12px;border-bottom:1px solid #dde}
+.pill{font-weight:600}.on{color:#1a9b3c}.off{color:var(--o)}
+.drawer{position:fixed;top:0;left:-290px;width:280px;height:100%;background:#fff;box-shadow:2px 0 12px #0004;transition:left .25s;z-index:9;padding-top:50px}
+.drawer.open{left:0}.drawer a{display:block;padding:14px 20px;border-bottom:1px solid #eee;cursor:pointer}.drawer a:hover{background:var(--l)}
+main{padding:14px;max-width:1300px;margin:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:14px;min-height:calc(100vh - 140px)}
+.tile{background:var(--g);color:#fff;border:0;border-radius:10px;font-size:1rem;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:18px;cursor:pointer}
+.tile span{font-size:2.2rem}.tile:hover{filter:brightness(1.2)}
+label{display:block;font-weight:600;margin:8px 0 3px}
+input,select,textarea{width:100%;padding:9px;border:1px solid #9bb;border-radius:6px;font-size:1rem}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:0 14px}
+.btn{background:var(--b);color:#fff;border:0;border-radius:8px;padding:11px 18px;font-size:1rem;cursor:pointer;margin:8px 6px 8px 0}
+.btn.big{width:100%;padding:14px}.btn.gr{background:#2e9b4a}.btn.rd{background:#c93a2a}.btn.sm{padding:4px 9px;margin:0 2px;font-size:.85rem}
+.wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;font-size:.85rem;margin:8px 0 16px}
+th,td{border:1px solid #888;padding:4px 6px;text-align:center}th{background:var(--l)}td.l{text-align:left}
+.login{min-height:calc(100vh - 52px);display:flex;align-items:center;justify-content:center;background:#d8f0d0 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='220' height='220'%3E%3Ctext x='10' y='50' font-size='38' opacity='.35'%3E%F0%9F%A9%BA%3C/text%3E%3Ctext x='120' y='110' font-size='38' opacity='.35'%3E%F0%9F%92%89%3C/text%3E%3Ctext x='20' y='180' font-size='38' opacity='.35'%3E%E2%9D%A4%EF%B8%8F%3C/text%3E%3Ctext x='140' y='200' font-size='38' opacity='.35'%3E%F0%9F%8F%A5%3C/text%3E%3C/svg%3E")}
+.card{background:#fff;border-radius:12px;padding:26px;width:min(420px,94vw);box-shadow:0 4px 24px #0003}
+.foot{text-align:center;font-size:.8rem;padding:10px;color:#555}
+.modal{position:fixed;inset:0;background:#0007;display:flex;align-items:center;justify-content:center;z-index:20}.modal>div{background:#fff;padding:20px;border-radius:10px;width:min(520px,94vw);white-space:pre-wrap}
+.cover{background:#cfe86a;padding:30px;min-height:900px;text-align:center;page-break-after:always}
+.cover .lg{display:flex;justify-content:space-between;font-weight:700}.cover h1{margin:140px 0 40px}.cover p{font-size:1.1rem}
+.pg{page-break-before:always}
+@media print{.bar,.band,.drawer,.noprint{display:none!important}main{padding:0;max-width:none}@page{size:A4;margin:10mm}}
+</style><script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script></head><body><div id="app"></div>
+<script>
+const $=s=>document.querySelector(s),E=s=>String(s??'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const B7=["0-4 ans","5-9 ans","10-14 ans","15-19 ans","20-24 ans","25-49 ans","50 ans et plus"],BA=["08-14 ans","15-19 ans","20-24 ans","25-49 ans","50 ans et plus"],BP=["<15 ans","15-19 ans","20-24 ans","25 ans et plus"];
+const S=s=>s.split('|');
+const LS={
+"Paludisme":S("Cas suspects de Paludisme simple (y compris femme enceinte)|Cas suspects de Paludisme simple femme enceinte|Cas de Paludisme simple (y compris femme enceinte)|Cas de Paludisme simple femme enceinte|Cas suspects de Paludisme graves (y compris femme enceinte)|Cas suspects de Paludisme graves femme enceinte|Cas de Paludisme simple avec prescription de CTA (y compris femme enceinte)|Cas de Paludisme simple chez la femme enceinte avec prescription de CTA|Cas de Paludisme simple chez la femme enceinte avec prescription de quinine comprimé|Cas suspects de paludisme avec prescription de CTA (présumé), y compris femme enceinte|Cas suspects de paludisme chez la femme enceinte avec prescription de CTA (présumé)|Cas de Paludisme simple probable (y compris femme enceinte)|Cas de Paludisme simple probable chez femme enceinte"),
+"Maladies Infectieuses":S("Angine (IRA haute)|Autres maladies infectieuses|Broncho-pneumonie (IRA basse)|Cas suspects d’hydrocèle|Cas suspects de bilharziose urinaire|Cas suspects de lymphœdème|Cas suspects de trichiasis trachomateux|Coqueluche|Dermatoses|Diarrhée aiguë avec déshydratation sévère|Diarrhée aiguë avec signes évidents de déshydratation|Diarrhée aiguë sanglante|Diarrhée aiguë sans déshydratation|Fièvre jaune|Fièvre typhoïde|Hépatite virale B|Hépatite virale C|Laryngite (IRA haute)|Méningite|Nombre d’enfants de moins de 5 ans atteints de la pneumonie et ayant reçu une prescription d’antibiotique|Otite moyenne aiguë (IRA haute)|Pian|Pneumonie grave (IRA basse)|Pneumonie simple (IRA basse)|Rhinopharyngite (IRA haute)|Sinusite (IRA haute)|Tétanos|Tuberculose (CS)|Ulcère de Buruli (CS)|Varicelle|Zona|UGD|Rhinite"),
+"Infections sexuelle":S("Condylomes (végétation vénériennes ou crétes de coq)|Conjonctivite du nouveau-né|Douleurs testiculaires|Douleurs abdominales basses (pelviennes) chez la femme|Ecoulement urétral masculin et/ou douleur et/ou prurit et/ou gène intra urétrale|Ecoulement vaginal et/ou brûlure ou prurit et/ou mal odeur vaginale|Ulcération génitale et/ou bubon"),
+"Violences sexuelle":S("Nombre de survivants aux violences référés vers les autres structures|Nombre de survivants aux violences sexuelles ayant consulté dans les 72 heures|Nombre de survivants aux violences sexuelles pris en charge dans l'établissement"),
+"Bucco-dentaires":S("Autres affections dentaires|Bruxisme/usure dentaire|Burkit|Candidoses buccales|Carie|Cellulite|Gingivite|Halitose|Infection apicale|Malocclusion|Noma|Nombre de D|Parodontolyses|Plaque dentaire|Poches parodontales|Tartre|Traumatisme bucco-dentaire|Trouble de l'ATM|Trouble du frein lingual"),
+"Oculaires":S("Autres infections occulaires|Blépharite|Cataractes|Cécité|Conjonctivite allergique|Conjonctivite infectieuse|orgelet|Trachome"),
+"Maladies non transmissibles":S("Accident Vasculaire cérébral (AVC)|Accidenté de la voie publique|Allergie|Anémie grave|Anémie modérée|Appendicite|Asthme|Autres maladies non infectieuses|Autres traumatismes|Brûlure|Diabète Gestationnel|Drépanocytose|Fibrome utérin|GEU|Goitre|Hernie|HTA avec antécédent de HTA connu chez les adultes, y compris femme enceinte|HTA avec antécédent de HTA connu chez les femmes enceintes (adultes)|HTA sans antécédent de HTA connu chez les adultes, y compris femme enceinte|HTA sans antécédent de HTA connu chez les femmes enceintes (adultes)|Hyperglycémie sans antécédents de diabète connu|Insuffisance rénale aiguë|Lombalgie|Maladie indéterminée|Morsure de chien|Morsure de serpent|Occlusion intestinale|Péritonite|Retard psychomoteur|Tentative de suicide|Troubles psychiatriques|Avortement spontané|Avortement provoqué")};
+const CATS=Object.keys(LS),OUI=["Oui","Non"],FONC=S("Directeur Départemental|Informaticien|Superviseur|Infirmier|Sage-femme|Médecin|Biologiste");
+const trCur=c=>{const m=/^(\d+)([am])$/i.exec((c||'').trim());if(!m)return'Invalide';if(m[2].toLowerCase()=='m')return B7[0];const n=+m[1];return n<=4?B7[0]:n<=9?B7[1]:n<=14?B7[2]:n<=19?B7[3]:n<=24?B7[4]:n<=49?B7[5]:B7[6]};
+const trPf=c=>{const m=/^(\d+)a$/i.exec((c||'').trim());if(!m)return'Invalide';const n=+m[1];return n<=14?BP[0]:n<=19?BP[1]:n<=24?BP[2]:BP[3]};
+const trAcc=c=>{const m=/^(\d+)a$/i.exec((c||'').trim());if(!m)return'Invalide';const n=+m[1];return n<=14?BA[0]:n<=19?BA[1]:n<=24?BA[2]:n<=49?BA[3]:BA[4]};
+const MODS={
+curatif:{t:"🩺Soin curatif",tr:trCur,f:[{k:'date',l:'Date',t:'date'},{k:'age',l:"Code d’âge (5a ou 5m)",t:'age'},{k:'sexe',l:'Sexe',o:["Masculin","Féminin"]},{k:'diag',l:'Diagnostic',t:'diag'},{k:'autre',l:'Autre pathologie',t:'diag'},{k:'tdr',l:'TDR',o:["Positif","Négatif","Non réalisé"]},{k:'chir',l:'Chirurgie',o:["Autre petite chirurgie","Circoncision","Incision d’abcès","Suture de plaie traumatique"]},{k:'visite',l:'Type de visite',o:["Consultant","Contrôle","Soins"]},{k:'issue',l:'Issue de la consultation',o:["décédé","MO","Référé","Sorti"]},{k:'pans',l:'Pansement',o:OUI},{k:'inj',l:'Injection',o:OUI},{k:'perf',l:'Perfusion',o:OUI}]},
+cpn:{t:"🤰 CPN",f:[{k:'date',l:'Date',t:'date'},{k:'cpn',l:'Consultation prénatale',o:S("CPN1 au cours du 1er trimestre|CPN1 autre trimestre|CPN2|CPN3|CPN4 au 9ème mois|CPN4 autre trimestre|CPN5 et plus")},{k:'dep',l:'Dépistage des grossesses',o:S("Grossesse à risque dépistée en CPN1|Femme enceinte malnutrie dépistée en CPN|Femme enceinte anémiée dépistée en CPN|Femme enceinte dépistée positive à la syphilis en CPN|Femme enceinte dépistée positive à l'AgHBs en CPN")},{k:'prev',l:'Prévention au cours de la grossesse',o:S("SP 1 ère dose|SP 2 ième dose|SP 3 ième dose|SP 4 ième dose|SP 5 ième dose et plus|Nombre de femme enceinte vue en CPN et ayant reçu une MILDA|Nombre de femme enceinte vue en CPN et mise sous Fer+folate CP|Femme enceinte vue en CPN et déparasitée|Nombre de femme reçue en CPN qui ont bénéficié d'un counseling")},{k:'milda',l:'MILDA',o:OUI},{k:'depar',l:'Déparasitant',o:OUI}]},
+pf:{t:"👫 PF",tr:trPf,f:[{k:'date',l:'Date',t:'date'},{k:'age',l:"Code d’âge (ex 25a)",t:'age'},{k:'meth',l:'Type de méthode',o:S("Pilule (COC)|Pilule (COP)|Injectable IM 3 mois|Injectable IM 2 mois|Injectable sous cutané 3 mois|Auto-injection 3 mois|DIU|DUI-PP|Implant 5 ans|Implant 3 ans|Condom masculin|Condom féminin|Spermicide|Contraception d'urgence")},{k:'nouv',l:'Nouvelle utilisatrice',o:OUI}]},
+acc:{t:"🍼 Accouchement",tr:trAcc,f:[{k:'date',l:'Date',t:'date'},{k:'age',l:"Code d’âge (ex 25a)",t:'age'},{k:'lieu',l:"Lieu d’accouchement",o:["Accouchement dans l’établissement","Accouchement à domicile","Référé"]},{k:'vacc',l:'Statut vaccinal',o:["Correctement vaccinée","Incomplètement vaccinée","Non vaccinée"]},{k:'issue',l:'Issue de la grossesse',o:S("Naissance vivante|Mort-né frais|Mort-né macéré|Enfant né vivant dont le poids < 2500 g|Prématuré|Nouveau-né protégé à la naissance contre le tétanos|Accouchement multiple|Avortement spontané|Avortement provoqué")},{k:'sexe',l:"Sexe de l’enfant",o:["Masculin","Féminin"]},{k:'evac',l:'Évacuation',o:["Evacuation de la mère avant l’accouchement","Evacuation de la mère après l’accouchement","Evacuation du nouveau-né","Femme présentée une complication obstétricale","Femme présentant une complication obstétricale référé"]},{k:'fiche',l:'Fiche de déclaration renseignée',o:OUI},{k:'fiche2',l:'Fiche comporte les informations nécessaires',o:OUI}]},
+cpon:{t:"💊 CPoN",tr:trAcc,f:[{k:'date',l:'Date',t:'date'},{k:'age',l:"Code d’âge (ex 25a)",t:'age'},{k:'type',l:'Type de consultation postnatale',o:["06 à 72 heures","6e à 10e jours","06 à 08 semaines","Autre"]}]}};
+const TILES=[["curatif","🩺","Soin curatif"],["cpn","🤰","CPN"],["pf","👫","PF"],["acc","🍼","Accouchement"],["cpon","💊","CPoN"],["milda","🛡️","MILDA et Vitamine A"],["malnut","🍎","Malnutrition"],["vih","🎗️","VIH"],["ccc","💬","CCC"],["cancer","📋","Cancer de l’utérus"],["labo","🧪","Laboratoire"],["fin","👛","Gestion des finances"]];
+/* ====== CONFIG SUPABASE (à renseigner) ====== */
+const SBU='https://wboeavebpehsdqgmmypa.supabase.co',SBK='sb_publishable_FbXTAplPvxgQSI1cQYMroQ_7D7530_V';
+const sb=(window.supabase&&!SBU.includes('VOTRE'))?supabase.createClient(SBU,SBK):null;
+const EM=u=>u.toLowerCase()+'@SGDS.app',PW0='SGDS@2027',KEY='cisk_db2';
+let DB,ME=null,view='home',editing=null,cur=null,syncing=false;
+const save=()=>localStorage.setItem(KEY,JSON.stringify(DB));
+async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return'x'+btoa(unescape(encodeURIComponent(s)))}}
+const toUser=p=>({id:p.id,role:p.role,centre:p.centre_id,nom:p.nom,prenoms:p.prenoms,tel:p.tel,email:p.email,fonction:p.fonction,username:p.username,must:p.must});
+const toRec=r=>({id:r.id,mod:r.mod,centre:r.centre_id,uid:r.uid,ts:+r.ts,d:r.d,tr:r.tr,unl:r.unl,log:r.log||[],deleted:r.deleted});
+const fromRec=r=>({id:r.id,mod:r.mod,centre_id:r.centre,uid:r.uid,ts:r.ts,d:r.d,tr:r.tr,unl:!!r.unl,log:r.log||[],deleted:!!r.deleted});
+const nid=()=>crypto.randomUUID();
+async function init(){
+ DB=JSON.parse(localStorage.getItem(KEY)||'null')||{centres:[],users:[],records:[],last:null,auth:{}};
+ if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+ const s=sessionStorage.getItem('disk_me');if(s)ME=DB.users.find(u=>u.id==s)||null;
+ ME?shell():login();
+ addEventListener('popstate',()=>{if(ME){editing=null;go('home',1)}});addEventListener('online',()=>{stat();sync()});addEventListener('offline',()=>stat());setInterval(()=>sync(),60000);
+}
+/* ====== SYNCHRONISATION ====== */
+async function pullAll(t,since){let out=[],i=0;for(;;){let q=sb.from(t).select('*');if(since)q=q.gt('updated_at',since);
+ const{data,error}=await q.order('updated_at').order('id').range(i,i+999);if(error)throw error;out.push(...data);if(data.length<1000)break;i+=1000}return out}
+async function sync(){
+ if(!sb||!navigator.onLine||!ME||syncing)return;
+ const{data:{session}}=await sb.auth.getSession();
+ if(!session||session.user.id!=ME.id)return stat('⚠ Reconnectez-vous en ligne pour synchroniser');
+ syncing=true;stat('⏳ Synchronisation…');
+ try{
+  const dirty=DB.records.filter(r=>r.dirty),sent=dirty.map(r=>r.dirty);
+  if(dirty.length){const{error}=await sb.from('records').upsert(dirty.map(fromRec));if(error)throw error;dirty.forEach((r,i)=>{if(r.dirty===sent[i])delete r.dirty})}
+  const[c,p]=await Promise.all([pullAll('centres'),pullAll('profiles')]);
+  DB.centres=c;DB.users=p.map(toUser);
+  const rows=await pullAll('records',DB.last),idx=new Map(DB.records.map(r=>[r.id,r]));
+  for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
+  ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view)
+ }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div></div></div>
+<div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
+<label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
+<label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
+<label style="font-weight:400"><input type="checkbox" style="width:auto" onchange="lp.type=this.checked?'text':'password'"> Afficher le mot de passe</label>
+<button class="btn big" onclick="doLogin()">Se connecter</button>
+<a href="#" onclick="alert('Contactez l\'Administrateur pour réinitialiser votre mot de passe.');return false">Mot de passe oublié ?</a>
+<div id="le" style="color:#c93a2a;margin-top:8px"></div></div></div>
+<div class="foot">@ Version 2027 SGDS  Assistance : +2250703255195</div>`}
+async function doLogin(){const un=lu.value.trim().toLowerCase(),pw=lp.value,h=await hash(un+':'+pw),A=DB.auth||(DB.auth={}),err=m=>$('#le').textContent=m;
+ if(sb&&navigator.onLine){
+  const{data,error}=await sb.auth.signInWithPassword({email:EM(un),password:pw});
+  if(!error){const{data:p,error:e2}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
+   if(e2||!p)return err("Profil introuvable. Contactez l’administrateur.");
+   const u=toUser(p),i=DB.users.findIndex(x=>x.id==u.id);i<0?DB.users.push(u):DB.users[i]=u;A[un]=h;save();return start(u)}
+  if(!/fetch|network/i.test(error.message))return err("Identifiant ou mot de passe incorrect.")}
+ const u=DB.users.find(x=>x.username.toLowerCase()==un);
+ if(!u||A[un]!=h)return err(sb&&navigator.onLine?"Connexion impossible.":"Hors ligne : une première connexion en ligne est nécessaire sur cet appareil.");
+ start(u)}
+function start(u){ME=u;sessionStorage.setItem('disk_me',u.id);u.must?chpw():(go('home'),sync())}
+function chpw(){$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SGDS – Changer le mot de passe pour la sécurité de votre espace de travail</div><div></div></div><div class="login"><div class="card">
+<label>Ancien mot de passe</label><input id="p0" type="password" placeholder="••••••••">
+<label style="font-weight:400"><input type="checkbox" style="width:auto" onchange="p0.type=this.checked?'text':'password'"> Voir</label>
+<label>Nouveau mot de passe (6 car. min : lettre + chiffre)</label><input id="p1" type="password" placeholder="••••••••">
+<label style="font-weight:400"><input type="checkbox" style="width:auto" onchange="p1.type=this.checked?'text':'password'"> Voir</label>
+<label>Confirmer</label><input id="p2" type="password" placeholder="••••••••">
+<label style="font-weight:400"><input type="checkbox" style="width:auto" onchange="p2.type=this.checked?'text':'password'"> Voir</label>
+<button class="btn big" onclick="doPw()">Valider</button><div id="le" style="color:#c93a2a"></div></div></div>`}
+async function doPw(){const e=m=>$('#le').textContent=m;
+ if(!sb||!navigator.onLine)return e("Connexion internet requise pour changer le mot de passe.");
+ const{error:x}=await sb.auth.signInWithPassword({email:EM(ME.username),password:p0.value});if(x)return e("Ancien mot de passe incorrect.");
+ if(p1.value.length<6||!/[A-Za-z]/.test(p1.value)||!/\d/.test(p1.value))return e("Minimum 6 caractères avec lettre et chiffre.");
+ if(p1.value!=p2.value)return e("La confirmation ne correspond pas.");
+ if(p1.value==PW0)return e("Choisissez un mot de passe différent du standard.");
+ const{error:y}=await sb.auth.updateUser({password:p1.value});if(y)return e(y.message);
+ await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
+const cen=id=>DB.centres.find(c=>c.id==id)||{};
+function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
+<div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
+<div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
+${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
+<a onclick="go('home')">Tableau de bord</a><a onclick="logout()">Déconnexion</a></div><div id="back" class="noprint" style="padding:8px 14px 0;display:none"><button class="btn" onclick="back()">← Retour</button></div><main id="main"></main>`;stat();go(view)}
+function stat(t){const s=$('#st');if(!s)return;const o=navigator.onLine&&!!sb,n=DB.records.filter(r=>r.dirty).length;
+ s.className='pill '+(o?'on':'off');s.textContent=t||(o?(n?`⚫ Online – ${n} en attente`:'⚫ Online – Synchronisé'):`⚫ Offline – ${n} en attente`)}
+function logout(){sessionStorage.removeItem('disk_me');ME=null;view='home';login()}
+function back(){if(editing&&MODS[view]){editing=null;mod(view)}else go('home')}
+function go(v,np){if(!ME)return;view=v;if(!$('#main'))return shell();drw.classList.remove('open');editing=null;
+ $('#back').style.display=v=='home'?'none':'block';if(!np&&v!='home')history.pushState({v},'');window.scrollTo(0,0);
+ const m=$('#main');
+ if(v=='home')m.innerHTML=`<div class="grid">${TILES.map(t=>`<button class="tile" onclick="go('${t[0]}')"><span>${t[1]}</span>${t[2]}</button>`).join('')}</div>`;
+ else if(MODS[v])mod(v);
+ else if(v.startsWith('rep'))report(+v.slice(3));
+ else if(v=='centres')centres();else if(v=='users')users();
+ else m.innerHTML=`<h2>${E((TILES.find(t=>t[0]==v)||[0,0,v])[2])}</h2><p>Module bientôt disponible !.</p>`}
+const opt=(a,s)=>`<option value="">Sélectionner</option>`+a.map(x=>`<option ${x==s?'selected':''}>${E(x)}</option>`).join('');
+const today=()=>new Date().toISOString().slice(0,10),yr=()=>new Date().getFullYear();
+const mine=m=>DB.records.filter(r=>r.mod==m&&!r.deleted&&r.centre==ME.centre);
+const locked=r=>Date.now()-r.ts>864e5&&!r.unl;
+function fld(f,v){const id='f_'+f.k,x=v[f.k]||'';
+ if(f.t=='date')return`<div><label>${f.l}</label><input type="date" id="${id}" min="${yr()}-01-01" max="${yr()}-12-31" value="${x||today()}"></div>`;
+ if(f.t=='age')return`<div><label>${f.l}</label><input id="${id}" pattern="\\d+[am]" placeholder="5a ou 5m" value="${E(x)}"></div>`;
+ if(f.t=='diag')return`<div><label>${f.l}</label><select id="${id}_c" onchange="cat('${f.k}')">${opt(CATS,v[f.k+'_c'])}</select><select id="${id}" style="margin-top:4px">${opt(LS[v[f.k+'_c']]||[],x)}</select></div>`;
+ return`<div><label>${f.l}</label><select id="${id}">${opt(f.o,x)}</select></div>`}
+function cat(k){const c=$('#f_'+k+'_c').value;let l=LS[c]||[];$('#f_'+k).innerHTML=opt(k=='autre'||1?l:l)}
+function mod(m){const M=MODS[m],v=editing?DB.records.find(r=>r.id==editing).d:{};cur=m;
+ const cols=M.f.filter(f=>f.k!='date'&&f.k!='age'),rs=mine(m).sort((a,b)=>b.ts-a.ts);
+ $('#main').innerHTML=`<h2>${M.t}</h2><div class="f">${M.f.map(f=>fld(f,v)).join('')}</div>
+<button class="btn gr" onclick="saveRec()">${editing?'Mettre à jour':'Enregistrer'}</button><div id="le" style="color:#c93a2a"></div>
+<div class="wrap"><table><tr><th>Date</th>${M.tr?'<th>Tranche d’âge</th>':''}${cols.map(f=>`<th>${f.l}</th>`).join('')}${m=='pf'?'<th>Ancienne utilisatrice</th>':''}<th>Actions</th></tr>
+${rs.map(r=>`<tr><td>${r.d.date}</td>${M.tr?`<td>${r.tr}</td>`:''}${cols.map(f=>`<td>${E(r.d[f.k]||'')}</td>`).join('')}${m=='pf'?`<td>${r.d.nouv=='Oui'?'Non':r.d.nouv=='Non'?'Oui':''}</td>`:''}
+<td>${!locked(r)&&r.uid==ME.id?`<button class="btn sm gr" onclick="editing='${r.id}';mod('${m}')">✎</button><button class="btn sm rd" onclick="delRec('${r.id}')">🗑</button>`:locked(r)?(ME.role=='super'?`<button class="btn sm" onclick="unlock('${r.id}')">🔓</button>`:'🔒'):''}</td></tr>`).join('')}</table></div>`}
+function saveRec(){const M=MODS[cur],d={};
+ M.f.forEach(f=>{d[f.k]=$('#f_'+f.k).value;if(f.t=='diag')d[f.k+'_c']=$('#f_'+f.k+'_c').value});
+ if(!d.date)return $('#le').textContent="La date est obligatoire.";
+ if(d.age!==undefined&&!/^\d+[am]$/i.test(d.age))return $('#le').textContent="Code d’âge invalide (ex : 5a ou 5m).";
+ const tr=M.tr?M.tr(d.age):'';
+ if(editing){const r=DB.records.find(r=>r.id==editing);r.d=d;r.tr=tr;r.dirty=Date.now()}
+ else DB.records.push({id:nid(),mod:cur,centre:ME.centre,uid:ME.id,ts:Date.now(),d,tr,dirty:Date.now()});
+ save();editing=null;mod(cur);stat();sync()}
+function delRec(id){if(confirm("Supprimer cette ligne ?")){const r=DB.records.find(r=>r.id==id);r.deleted=true;r.dirty=Date.now();save();mod(cur);sync()}}
+function unlock(id){const m=prompt("Motif du déverrouillage (obligatoire) :");if(!m||!m.trim())return;
+ const r=DB.records.find(r=>r.id==id);r.unl=true;r.log=[...(r.log||[]),{by:ME.username,at:new Date().toISOString(),motif:m}];r.dirty=Date.now();save();mod(cur);sync()}
+/* Centres */
+function centres(){const c=editing?DB.centres.find(x=>x.id==editing):{};
+ $('#main').innerHTML=`<h2>Gestion des centres</h2><div class="f">${[['nom','Nom de l’établissement'],['code','Code de l’établissement'],['pop','Population'],['region','Région sanitaire'],['district','District sanitaire']].map(([k,l])=>`<div><label>${l}</label><input id="c_${k}" value="${E(c[k]||'')}"></div>`).join('')}</div>
+<button class="btn gr" onclick="saveCen()">Enregistrer</button><div class="wrap"><table><tr><th>Nom</th><th>Code</th><th>Population</th><th>Région</th><th>District</th><th></th></tr>
+${DB.centres.map(c=>`<tr><td>${E(c.nom)}</td><td>${E(c.code)}</td><td>${E(c.pop)}</td><td>${E(c.region)}</td><td>${E(c.district)}</td><td><button class="btn sm gr" onclick="editing='${c.id}';centres()">✎</button><button class="btn sm rd" onclick="delCen('${c.id}')">🗑</button></td></tr>`).join('')}</table></div>`}
+const NEED="Connexion internet requise pour cette opération.";
+async function saveCen(){const o={};['nom','code','pop','region','district'].forEach(k=>o[k]=$('#c_'+k).value.trim());if(!o.nom)return alert("Nom obligatoire");
+ if(!sb||!navigator.onLine)return alert(NEED);o.pop=+o.pop||0;if(editing)o.id=editing;
+ const{error}=await sb.from('centres').upsert(o);if(error)return alert(error.message);editing=null;await sync();centres()}
+async function delCen(id){if(DB.users.some(u=>u.centre==id))return alert("Ce centre a des utilisateurs.");if(!sb||!navigator.onLine)return alert(NEED);
+ if(confirm("Supprimer ?")){const{error}=await sb.from('centres').delete().eq('id',id);if(error)return alert(error.message);await sync();centres()}}
+/* Utilisateurs */
+function users(){$('#main').innerHTML=`<h2>Gestion des utilisateurs</h2><div class="f">
+<div><label>Centre</label><select id="u_c">${DB.centres.map(c=>`<option value="${c.id}">${E(c.nom)}</option>`).join('')}</select></div>
+${[['nom','Nom'],['prenoms','Prénoms'],['tel','Téléphone'],['email','Email']].map(([k,l])=>`<div><label>${l}</label><input id="u_${k}"></div>`).join('')}
+<div><label>Fonction</label><select id="u_fonction">${opt(FONC)}</select></div></div>
+<button class="btn gr" onclick="saveUser()">Créer le compte</button><div class="wrap"><table><tr><th>Utilisateur</th><th>Nom</th><th>Centre</th><th>Fonction</th><th></th></tr>
+${DB.users.map(u=>`<tr><td>${E(u.username)}</td><td>${E(u.nom+' '+u.prenoms)}</td><td>${E(cen(u.centre).nom)}</td><td>${E(u.fonction)}</td><td>${u.role=='super'?'':`<button class="btn sm" onclick="resetPw('${u.id}')">Réinit.</button><button class="btn sm rd" onclick="delUser('${u.id}')">🗑</button>`}</td></tr>`).join('')}</table></div>`}
+async function saveUser(){const g=k=>$('#u_'+k).value.trim(),nom=g('nom'),tel=g('tel').replace(/\D/g,'');
+ if(!nom||!g('prenoms')||tel.length<3||!g('fonction'))return alert("Nom, prénoms, téléphone (3 chiffres min) et fonction obligatoires.");
+ if(!sb||!navigator.onLine)return alert(NEED);
+ let un=nom[0].toUpperCase()+nom.slice(1).toLowerCase()+tel.slice(-3);if(DB.users.some(u=>u.username.toLowerCase()==un.toLowerCase()))return alert("Nom d’utilisateur déjà utilisé : "+un);
+ const{error}=await sb.rpc('sgds_create_user',{p_username:un,p_password:PW0,p_centre:g('c'),p_nom:nom,p_prenoms:g('prenoms'),p_tel:g('tel'),p_email:g('email'),p_fonction:g('fonction')});
+ if(error)return alert(error.message);await sync();
+ const msg=`SGDS– Portail officiel\nBonjour ${nom} ${g('prenoms')},\nVotre accès au portail SGDS a été créé.\nCentre : ${cen(g('c')).nom}\nNom d’utilisateur : ${un}\nMot de passe : ${PW0}\nVeuillez changer votre mot de passe à la première connexion.\nLien : ${location.href}`;
+ const d=document.createElement('div');d.className='modal';d.innerHTML=`<div><b>Envoyer les identifiants</b>\n\n${E(msg)}\n\n<a class="btn" href="sms:${tel}?body=${encodeURIComponent(msg)}">SMS</a><a class="btn gr" href="mailto:${E(g('email'))}?subject=CISK&body=${encodeURIComponent(msg)}">Email</a><button class="btn rd" onclick="this.closest('.modal').remove();users()">Fermer</button></div>`;document.body.appendChild(d)}
+async function resetPw(id){if(!sb||!navigator.onLine)return alert(NEED);const{error}=await sb.rpc('cisk_reset_password',{p_user:id});alert(error?error.message:"Mot de passe remis à "+PW0+".")}
+async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confirm("Supprimer ?")){const{error}=await sb.rpc('cisk_delete_user',{p_user:id});if(error)return alert(error.message);await sync();users()}}
+/* Rapport SIG */
+function report(months){const e=new Date(),s=new Date(e.getFullYear(),e.getMonth()-months+1,1);const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
+ $('#main').innerHTML=`<div class="noprint"><h2>Rapport SIG</h2><div class="f"><div><label>Du</label><input type="date" id="r_s" value="${iso(s)}"></div><div><label>Au</label><input type="date" id="r_e" value="${iso(e)}"></div>
+${ME.role=='super'?`<div><label>Centre</label><select id="r_c">${DB.centres.map(c=>`<option value="${c.id}" ${c.id==ME.centre?'selected':''}>${E(c.nom)}</option>`).join('')}</select></div>`:''}</div>
+<button class="btn" onclick="genRep()">Générer</button><button class="btn gr" onclick="print()">Imprimer / PDF</button></div><div id="rep"></div>`;genRep()}
+function genRep(){$('#rep').innerHTML=sig($('#r_s').value,$('#r_e').value,$('#r_c')?$('#r_c').value:ME.centre)}
+function sig(s,e,cid){const C=cen(cid),R=DB.records.filter(r=>!r.deleted&&r.centre==cid&&r.d.date>=s&&r.d.date<=e);
+ const n=(m,f)=>R.filter(r=>r.mod==m&&f(r)).length,sum=a=>a.reduce((x,y)=>x+y,0);
+ const T=(h,rows)=>`<div class="wrap"><table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map((x,i)=>`<td class="${i?'':'l'}">${x}</td>`).join('')}</tr>`).join('')}</table></div>`;
+ const row=(lb,m,f,bands)=>{const v=bands.map(b=>n(m,r=>r.tr==b&&f(r.d)));return[lb,...v,sum(v)]};
+ const one=(lb,m,f)=>[lb,n(m,r=>f(r.d))];
+ const H7=["Activité",...B7,"Total"];
+ const morb=(t,list)=>`<h4>${t}</h4>`+T(["Indicateur",...B7,"Total","Référé"],list.map(it=>{const f=d=>d.diag==it||d.autre==it,v=row(it,'curatif',f,B7);return[...v,n('curatif',r=>f(r.d)&&r.d.issue=='Référé')]}));
+ const mth=MODS.pf.f[2].o,ac=MODS.acc.f,cp=MODS.cpn.f;
+ const per=`${s} au ${e}`;
+ return`<div class="cover"><div class="lg"><img src="icon-192.png" alt="SGDS" height="80"><span><img src="icon-ci.png"</span></div><h1>RAPPORT MENSUEL</h1>
+<p>Rapport de la période : <b>${per}</b></p><p>Etablissement sanitaire : <b>${E(C.nom)}</b></p><p>Code de l’établissement : <b>${E(C.code)}</b></p><p>District sanitaire : <b>${E(C.district||'NASSIAN')}</b></p><p>Région sanitaire : <b>${E(C.region||'BOUNKANI')}</b></p>
+<p>Population desservie : <b>${E(C.pop)}</b></p><p>Établi par : ${E(ME.nom+' '+ME.prenoms)}</p></div>
+<h3>I. ACTIVITE – 1. Consultation et soins – a. Soins curatifs</h3>
+${T(H7,[row("Nombre de consultant",'curatif',d=>d.visite=='Consultant',B7),row("Nombre de consultation",'curatif',d=>['Consultant','Soins','Contrôle'].includes(d.visite),B7),row("Nombre de MO",'curatif',d=>d.issue=='MO',B7),row("Nombre de cas référé",'curatif',d=>d.issue=='Référé',B7),row("Nombre de décès",'curatif',d=>d.issue=='décédé',B7)])}
+<h4>b. Soins infirmiers et petite chirurgie</h4>${T(["Soins","Nombre"],[one("Pansement",'curatif',d=>d.pans=='Oui'),one("Injection",'curatif',d=>d.inj=='Oui'),one("Perfusion",'curatif',d=>d.perf=='Oui'),one("Circoncision masculine",'curatif',d=>d.chir=='Circoncision'),one("Suture de plaie traumatique",'curatif',d=>d.chir=='Suture de plaie traumatique'),one("Incision d’abcès",'curatif',d=>d.chir=='Incision d’abcès'),one("Autre petite chirurgie",'curatif',d=>d.chir=='Autre petite chirurgie')])}
+<h3 class="pg">2. Suivi de la mère et de l’enfant – a. Consultation prénatale</h3>
+${(()=>{const c1=n('cpn',r=>r.d.cpn==cp[1].o[0]),c2=n('cpn',r=>r.d.cpn==cp[1].o[1]);return T(["Femme enceinte reçue","Nombre"],[["CPN1 au cours du 1er trimestre",c1],["CPN1 autre trimestre",c2],["Total CPN1",c1+c2],...cp[1].o.slice(2).map(o=>[o,n('cpn',r=>r.d.cpn==o)])])})()}
+${T(["Dépistage des grossesses à risque","Nombre"],cp[2].o.map(o=>[o,n('cpn',r=>r.d.dep==o)]))}
+${T(["Prévention au cours de la grossesse","Nombre"],cp[3].o.slice(0,5).map(o=>[o,n('cpn',r=>r.d.prev==o)]).concat([["Femme enceinte vue en CPN et ayant reçu une MILDA",n('cpn',r=>r.d.milda=='Oui')],["Femme enceinte vue en CPN et déparasitée",n('cpn',r=>r.d.depar=='Oui')],["Femme en CPN mise sous Fer+folate / counseling",n('cpn',r=>!!r.d.cpn)]]))}
+<h4>b. Accouchement et consultation postnatale</h4>
+${(()=>{const L=ac[2].o,a=L.slice(0,2).map(l=>row(l,'acc',d=>d.lieu==l,BA));const t=["Total",...BA.map((_,i)=>a[0][i+1]+a[1][i+1]),a[0][6]+a[1][6]];return T(["Lieu d’accouchement",...BA,"Total"],[...a,t,row("Nombre de cas référé",'acc',d=>d.lieu=='Référé',BA)])})()}
+${T(["Statut vaccinal au VAT","Nombre"],ac[3].o.map(o=>[o,n('acc',r=>r.d.vacc==o)]))}
+${T(["Issue de la grossesse","Nombre"],ac[4].o.map(o=>[o,n('acc',r=>r.d.issue==o)]))}
+${T(["Évacuation / CO","Nombre"],ac[6].o.map(o=>[o,n('acc',r=>r.d.evac==o)]))}
+${T(["Déclaration de naissance","Masculin","Féminin","Total"],[["Fiche renseignée",...['Masculin','Féminin'].map(x=>n('acc',r=>r.d.fiche=='Oui'&&r.d.sexe==x)),n('acc',r=>r.d.fiche=='Oui')],["Fiche avec informations nécessaires",...['Masculin','Féminin'].map(x=>n('acc',r=>r.d.fiche2=='Oui'&&r.d.sexe==x)),n('acc',r=>r.d.fiche2=='Oui')]])}
+${T(["Consultation postnatale","Nombre"],MODS.cpon.f[2].o.map(o=>[o,n('cpon',r=>r.d.type==o)]))}
+<p><i>Sections MILDA/Vitamine A, nutrition, VIH, CCC, cancer du col : à ajouter lorsque leurs modules de saisie seront créés (valeurs 0 par défaut).</i></p>
+<h3 class="pg">6. Planification familiale</h3>
+${T(["Méthode",...BP.map(b=>"Nouvelle "+b),"Total nouvelles","Ancienne utilisatrice","Total utilisatrices"],mth.map(m=>{const v=BP.map(b=>n('pf',r=>r.d.meth==m&&r.d.nouv=='Oui'&&r.tr==b)),a=n('pf',r=>r.d.meth==m&&r.d.nouv=='Non');return[m,...v,sum(v),a,sum(v)+a]}))}
+<h3 class="pg">II. MORBIDITE</h3>${morb("Maladies infectieuses",[...LS["Paludisme"],...LS["Maladies Infectieuses"]])}
+${morb("Infections sexuellement transmissibles",LS["Infections sexuelle"])}${morb("Violence basée sur le genre",LS["Violences sexuelle"])}
+${morb("Affections bucco-dentaires",LS["Bucco-dentaires"])}${morb("Affections oculaires",LS["Oculaires"])}${morb("Maladies non transmissibles",LS["Maladies non transmissibles"])}`}
+init();
+</script></body></html>
