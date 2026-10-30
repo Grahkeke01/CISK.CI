@@ -94,7 +94,7 @@ async function sync(){
   for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
   ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view)
  }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
-function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div></div></div>
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div></div></div>
 <div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
 <label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
 <label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
