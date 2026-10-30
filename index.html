@@ -242,6 +242,10 @@ ${T(["Consultation postnatale","Nombre"],MODS.cpon.f[2].o.map(o=>[o,n('cpon',r=>
 ${T(["Méthode",...BP.map(b=>"Nouvelle "+b),"Total nouvelles","Ancienne utilisatrice","Total utilisatrices"],mth.map(m=>{const v=BP.map(b=>n('pf',r=>r.d.meth==m&&r.d.nouv=='Oui'&&r.tr==b)),a=n('pf',r=>r.d.meth==m&&r.d.nouv=='Non');return[m,...v,sum(v),a,sum(v)+a]}))}
 <h3 class="pg">II. MORBIDITE</h3>${morb("Maladies infectieuses",[...LS["Paludisme"],...LS["Maladies Infectieuses"]])}
 ${morb("Infections sexuellement transmissibles",LS["Infections sexuelle"])}${morb("Violence basée sur le genre",LS["Violences sexuelle"])}
-${morb("Affections bucco-dentaires",LS["Bucco-dentaires"])}${morb("Affections oculaires",LS["Oculaires"])}${morb("Maladies non transmissibles",LS["Maladies non transmissibles"])}`}
+${morb("Affections bucco-dentaires",LS["Bucco-dentaires"])}${morb("Affections oculaires",LS["Oculaires"])}${morb("Maladies non transmissibles",LS["Maladies non transmissibles"])}
+<h3 class="pg">III. RÉALISATION DES TESTS RAPIDES</h3><h4>Diagnostic biologique du paludisme</h4>
+${(()=>{const pg=d=>[d.diag,d.autre].some(x=>/femmes? enceintes?/i.test(x||'')&&!/y compris/i.test(x||'')),
+ tdr=(g,p)=>[["TDR positifs","Positif"],["TDR négatifs","Négatif"],["TDR non réalisé","Non réalisé"]].map(([l,v])=>row(l,'curatif',d=>d.tdr==v&&p(d),B7));
+ return T(H7,[...tdr(0,d=>true),["<b>Femme enceinte</b>",...B7.map(()=>""),""],...tdr(1,pg)])})()}`}
 init();
 </script></body></html>
