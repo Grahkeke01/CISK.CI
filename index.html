@@ -95,7 +95,7 @@ async function sync(){
   for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
   ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view);else if((view=='cmu'||view=='home'&&isCmu())&&['dash','reg'].includes(cmuP))cmu(cmuP)
  }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
-function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div></div></div>
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div></div></div>
 <div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
 <label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
 <label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
@@ -133,7 +133,7 @@ async function doPw(){const e=m=>$('#le').textContent=m;
  await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
 const cen=id=>DB.centres.find(c=>c.id==id)||{};
 function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
-<div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
 <div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
 <div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
 ${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
