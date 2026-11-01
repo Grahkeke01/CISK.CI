@@ -66,7 +66,7 @@ const EM=u=>u.toLowerCase()+'@SGDS.app',PW0='SGDS@2027',KEY='cisk_db2';
 let DB,ME=null,view='home',editing=null,cur=null,syncing=false;
 const save=()=>localStorage.setItem(KEY,JSON.stringify(DB));
 async function hash(s){try{const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return[...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}catch(e){return'x'+btoa(unescape(encodeURIComponent(s)))}}
-const toUser=p=>({id:p.id,role:p.role,centre:p.centre_id,nom:p.nom,prenoms:p.prenoms,tel:p.tel,email:p.email,fonction:p.fonction,username:p.username,must:p.must});
+const toUser=p=>({id:p.id,role:p.role,centre:p.centre_id,nom:p.nom,prenoms:p.prenoms,tel:p.tel,email:p.email,fonction:p.fonction,username:p.username,must:p.must,actif:p.actif!==false});
 const toRec=r=>({id:r.id,mod:r.mod,centre:r.centre_id,uid:r.uid,ts:+r.ts,d:r.d,tr:r.tr,unl:r.unl,log:r.log||[],deleted:r.deleted});
 const fromRec=r=>({id:r.id,mod:r.mod,centre_id:r.centre,uid:r.uid,ts:r.ts,d:r.d,tr:r.tr,unl:!!r.unl,log:r.log||[],deleted:!!r.deleted});
 const nid=()=>crypto.randomUUID();
@@ -84,6 +84,7 @@ async function sync(){
  if(!sb||!navigator.onLine||!ME||syncing)return;
  const{data:{session}}=await sb.auth.getSession();
  if(!session||session.user.id!=ME.id)return stat('⚠ Reconnectez-vous en ligne pour synchroniser');
+ {const{data:me}=await sb.from('profiles').select('actif').eq('id',ME.id).maybeSingle();if(me&&me.actif===false){const u=DB.users.find(x=>x.id==ME.id);if(u)u.actif=false;save();alert("Votre compte a été désactivé. Contactez l’administrateur.");return logout()}}
  syncing=true;stat('⏳ Synchronisation…');
  try{
   const dirty=DB.records.filter(r=>r.dirty),sent=dirty.map(r=>r.dirty);
@@ -94,7 +95,7 @@ async function sync(){
   for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
   ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view);else if((view=='cmu'||view=='home'&&isCmu())&&['dash','reg'].includes(cmuP))cmu(cmuP)
  }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
-function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div></div></div>
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div></div></div>
 <div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
 <label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
 <label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
@@ -109,9 +110,9 @@ async function doLogin(){const un=lu.value.trim().toLowerCase(),pw=lp.value,h=aw
   if(!error){const{data:p,error:e2}=await sb.from('profiles').select('*').eq('id',data.user.id).single();
    if(e2||!p)return err("Profil introuvable. Contactez l’administrateur.");
    const u=toUser(p),i=DB.users.findIndex(x=>x.id==u.id);i<0?DB.users.push(u):DB.users[i]=u;A[un]=h;save();return start(u)}
-  if(!/fetch|network/i.test(error.message))return err("Identifiant ou mot de passe incorrect.")}
+  if(/banned/i.test(error.message))return err("Compte désactivé. Contactez l’administrateur.");if(!/fetch|network/i.test(error.message))return err("Identifiant ou mot de passe incorrect.")}
  const u=DB.users.find(x=>x.username.toLowerCase()==un);
- if(!u||A[un]!=h)return err(sb&&navigator.onLine?"Connexion impossible.":"Hors ligne : une première connexion en ligne est nécessaire sur cet appareil.");
+ if(u&&u.actif===false)return err("Compte désactivé. Contactez l’administrateur.");if(!u||A[un]!=h)return err(sb&&navigator.onLine?"Connexion impossible.":"Hors ligne : une première connexion en ligne est nécessaire sur cet appareil.");
  start(u)}
 function start(u){ME=u;sessionStorage.setItem('disk_me',u.id);u.must?chpw():(go('home'),sync())}
 function chpw(){$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SGDS – Changer le mot de passe pour la sécurité de votre espace de travail</div><div></div></div><div class="login"><div class="card">
@@ -132,7 +133,7 @@ async function doPw(){const e=m=>$('#le').textContent=m;
  await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
 const cen=id=>DB.centres.find(c=>c.id==id)||{};
 function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
-<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
 <div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
 <div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
 ${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
@@ -193,8 +194,8 @@ function users(){$('#main').innerHTML=`<h2>Gestion des utilisateurs</h2><div cla
 <div><label>Centre</label><select id="u_c">${DB.centres.map(c=>`<option value="${c.id}">${E(c.nom)}</option>`).join('')}</select></div>
 ${[['nom','Nom'],['prenoms','Prénoms'],['tel','Téléphone'],['email','Email']].map(([k,l])=>`<div><label>${l}</label><input id="u_${k}"></div>`).join('')}
 <div><label>Fonction</label><select id="u_fonction">${opt(FONC)}</select></div></div>
-<button class="btn gr" onclick="saveUser()">Créer le compte</button><div class="wrap"><table><tr><th>Utilisateur</th><th>Nom</th><th>Centre</th><th>Fonction</th><th></th></tr>
-${DB.users.map(u=>`<tr><td>${E(u.username)}</td><td>${E(u.nom+' '+u.prenoms)}</td><td>${E(cen(u.centre).nom)}</td><td>${E(u.fonction)}</td><td>${u.role=='super'?'':`<button class="btn sm" onclick="resetPw('${u.id}')">Réinit.</button><button class="btn sm rd" onclick="delUser('${u.id}')">🗑</button>`}</td></tr>`).join('')}</table></div>`}
+<button class="btn gr" onclick="saveUser()">Créer le compte</button><div class="wrap"><table><tr><th>Utilisateur</th><th>Nom</th><th>Centre</th><th>Fonction</th><th>Statut</th><th></th></tr>
+${DB.users.map(u=>`<tr><td>${E(u.username)}</td><td>${E(u.nom+' '+u.prenoms)}</td><td>${E(cen(u.centre).nom)}</td><td>${E(u.fonction)}</td><td>${u.actif===false?'⛔ Désactivé':'✅ Actif'}</td><td>${u.role=='super'?'':`<button class="btn sm ${u.actif===false?'gr':'rd'}" onclick="setActive('${u.id}',${u.actif===false})">${u.actif===false?'Réactiver':'Désactiver'}</button><button class="btn sm" onclick="resetPw('${u.id}')">Réinit.</button><button class="btn sm rd" onclick="delUser('${u.id}')">🗑</button>`}</td></tr>`).join('')}</table></div>`}
 async function saveUser(){const g=k=>$('#u_'+k).value.trim(),nom=g('nom'),tel=g('tel').replace(/\D/g,'');
  if(!nom||!g('prenoms')||tel.length<3||!g('fonction'))return alert("Nom, prénoms, téléphone (3 chiffres min) et fonction obligatoires.");
  if(!sb||!navigator.onLine)return alert(NEED);
@@ -204,7 +205,10 @@ async function saveUser(){const g=k=>$('#u_'+k).value.trim(),nom=g('nom'),tel=g(
  const msg=`SGDS– Portail officiel\nBonjour ${nom} ${g('prenoms')},\nVotre accès au portail SGDS a été créé.\nCentre : ${cen(g('c')).nom}\nNom d’utilisateur : ${un}\nMot de passe : ${PW0}\nVeuillez changer votre mot de passe à la première connexion.\nLien : ${location.href}`;
  window._msg=msg;const d=document.createElement('div');d.className='modal';d.innerHTML=`<div><b>Envoyer les identifiants</b>\n\n${E(msg)}\n\n<a class="btn" href="sms:${tel}?body=${encodeURIComponent(msg)}">SMS</a><a class="btn gr" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(g('email'))}&su=${encodeURIComponent('SGDS – Accès au portail')}&body=${encodeURIComponent(msg)}">Gmail</a><a class="btn gr" target="_blank" rel="noopener" href="https://wa.me/${/^0\d{9}$/.test(tel)?'225'+tel:tel}?text=${encodeURIComponent(msg)}">WhatsApp</a><button class="btn" onclick="navigator.clipboard.writeText(window._msg).then(()=>this.textContent='Copié ✓').catch(()=>prompt('Copiez le message :',window._msg))">Copier le message</button><button class="btn rd" onclick="this.closest('.modal').remove();users()">Fermer</button></div>`;document.body.appendChild(d)}
 async function resetPw(id){if(!sb||!navigator.onLine)return alert(NEED);const{error}=await sb.rpc('cisk_reset_password',{p_user:id});alert(error?error.message:"Mot de passe remis à "+PW0+".")}
-async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confirm("Supprimer ?")){const{error}=await sb.rpc('cisk_delete_user',{p_user:id});if(error)return alert(error.message);await sync();users()}}
+async function setActive(id,on){if(!sb||!navigator.onLine)return alert(NEED);
+ if(!confirm(on?"Réactiver ce compte ?":"Désactiver ce compte ? L’utilisateur ne pourra plus se connecter, mais ses données seront conservées."))return;
+ const{error}=await sb.rpc('sgds_set_active',{p_user:id,p_actif:on});if(error)return alert(error.message);await sync();users()}
+async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confirm("Supprimer DÉFINITIVEMENT ce compte ? Cette action est irréversible. Pour une suspension temporaire, utilisez « Désactiver ».")){const{error}=await sb.rpc('cisk_delete_user',{p_user:id});if(error)return alert(error.message);await sync();users()}}
 /* ====== MODULE CMU ====== */
 let cmuP='dash',cmuR='mensuel';
 const isCmu=()=>!!ME&&ME.fonction=='Agent CMU',cmuGo=p=>{cmuP=p;go('cmu')},fd=d=>String(d||'').split('-').reverse().join('/');
