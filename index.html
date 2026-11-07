@@ -2,8 +2,7 @@
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SYSTEME DE GESTION DE DONNEES SANITAIRES</title>
-<meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
-<meta name="keywords" content="SGDS, CSR, CSU, Daloa, santé, Côte d'Ivoire, District Sanitaire">
+ <meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1e5e2f">
 <link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SGDS">
@@ -151,7 +150,7 @@ async function doPw(){const e=m=>$('#le').textContent=m;
  await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
 const cen=id=>DB.centres.find(c=>c.id==id)||{};
 function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
-<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRES</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
 <div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
 <div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
 ${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
@@ -280,6 +279,7 @@ function sig(s,e,cid){const C=cen(cid),R=DB.records.filter(r=>!r.deleted&&r.cent
  const one=(lb,m,f)=>[lb,n(m,r=>f(r.d))];
  const H7=["Activité",...B7,"Total"];
  const morb=(t,list)=>`<h4>${t}</h4>`+T(["Indicateur",...B7,"Total","Référé"],list.map(it=>{const[lb,f]=typeof it=='string'?[it,d=>d.diag==it||d.autre==it]:it,v=row(lb,'curatif',f,B7);return[...v,n('curatif',r=>f(r.d)&&r.d.issue=='Référé')]}));
+ const morbSx=(t,list)=>`<h4>${t}</h4><div class="wrap"><table><tr><th rowspan="2">Indicateur</th>${B7.map(b=>`<th colspan="2">${b}</th>`).join('')}<th rowspan="2">Total</th><th rowspan="2">Référé</th></tr><tr>${B7.map(()=>'<th>M</th><th>F</th>').join('')}</tr>${list.map(it=>{const f=d=>d.diag==it||d.autre==it;let tt=0;return`<tr><td class="l">${it}</td>${B7.map(b=>SX.map(x=>{const c=n('curatif',r=>r.tr==b&&r.d.sexe==x&&f(r.d));tt+=c;return`<td>${c}</td>`}).join('')).join('')}<td>${tt}</td><td>${n('curatif',r=>f(r.d)&&r.d.issue=='Référé')}</td></tr>`}).join('')}</table></div>`;
  const mth=MODS.pf.f[2].o,ac=MODS.acc.f,cp=MODS.cpn.f;
  const per=`${s} au ${e}`;
  const SX=["Masculin","Féminin"],MB=["0-5 mois","6-11 mois","12-59 mois"],VB=["6-11 mois","12-59 mois"];
@@ -319,7 +319,7 @@ ${extra}
 <h3 class="pg">6. Planification familiale</h3>
 ${T(["Méthode",...BP.map(b=>"Nouvelle "+b),"Total nouvelles","Ancienne utilisatrice","Total utilisatrices"],mth.map(m=>{const v=BP.map(b=>n('pf',r=>r.d.meth==m&&r.d.nouv=='Oui'&&r.tr==b)),a=n('pf',r=>r.d.meth==m&&r.d.nouv=='Non');return[m,...v,sum(v),a,sum(v)+a]}))}
 <h3 class="pg">II. MORBIDITE</h3>${morb("Maladies infectieuses",[...MAL,...LS["Maladies Infectieuses"]])}
-${morb("Infections sexuellement transmissibles",LS["Infections sexuelle"])}${morb("Violence basée sur le genre",LS["Violences sexuelle"])}
+${morbSx("Infections sexuellement transmissibles",LS["Infections sexuelle"])}${morbSx("Violence basée sur le genre",LS["Violences sexuelle"])}
 ${morb("Affections bucco-dentaires",LS["Bucco-dentaires"])}${morb("Affections oculaires",LS["Oculaires"])}${morb("Maladies non transmissibles",LS["Maladies non transmissibles"])}
 <h3 class="pg">III. RÉALISATION DES TESTS RAPIDES</h3><h4>Diagnostic biologique du paludisme</h4>
 ${(()=>{const pg=fe,
