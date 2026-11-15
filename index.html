@@ -2,8 +2,7 @@
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SYSTEME DE GESTION DE DONNEES SANITAIRES</title>
-<meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
-<link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1e5e2f">
+ <meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1e5e2f">
 <link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SGDS">
@@ -113,7 +112,7 @@ async function sync(){
   for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
   ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view);else if((view=='cmu'||view=='home'&&isCmu())&&['dash','reg'].includes(cmuP))cmu(cmuP)
  }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
-function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div></div></div>
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRES</div><div></div></div>
 <div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
 <label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
 <label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
@@ -121,7 +120,7 @@ function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div c
 <button class="btn big" onclick="doLogin()">Se connecter</button>
 <a href="#" onclick="alert('Contactez l\'Administrateur pour réinitialiser votre mot de passe.');return false">Mot de passe oublié ?</a>
 <div id="le" style="color:#c93a2a;margin-top:8px"></div></div></div>
-<div class="foot">@ Version 1.0 SGDS</div>`}
+<div class="foot">@ Version 2027 SGDS  Assistance : +2250703255195</div>`}
 async function doLogin(){const un=lu.value.trim().toLowerCase(),pw=lp.value,h=await hash(un+':'+pw),A=DB.auth||(DB.auth={}),err=m=>$('#le').textContent=m;
  if(sb&&navigator.onLine){
   const{data,error}=await sb.auth.signInWithPassword({email:EM(un),password:pw});
@@ -151,7 +150,7 @@ async function doPw(){const e=m=>$('#le').textContent=m;
  await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
 const cen=id=>DB.centres.find(c=>c.id==id)||{};
 function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
-<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRES</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
 <div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
 <div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
 ${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
@@ -235,13 +234,13 @@ async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confi
 let cmuP='dash',cmuR='mensuel';
 const isCmu=()=>!!ME&&ME.fonction=='Agent CMU',cmuGo=p=>{cmuP=p;go('cmu')},fd=d=>String(d||'').split('-').reverse().join('/');
 const pc=(a,b)=>b>0?(a/b*100).toFixed(1)+' %':'0 %';
-function cmuNum(e){e.value=e.value.replace(/\D/g,'');cmuCalc()}
-function cmuCalc(){const g=i=>$('#'+i).value,n=i=>+g(i)||0;$('#m_sans').value=g('m_recu')===''||g('m_avec')===''?'':n('m_recu')-n('m_avec');$('#m_sansb').value=g('m_avec')===''||g('m_benef')===''?'':n('m_avec')-n('m_benef')}
+function cmuNum(e){e.value=e.value.replace(/\D/g,'')}
 function cmuSave(){const g=i=>$('#'+i).value.trim(),d={date:g('m_date')},err=m=>$('#le').textContent=m;
  if(!d.date)return err("La date est obligatoire.");
  if(d.date.slice(0,4)!=yr())return err("La date doit être dans l’année "+yr()+".");
- for(const[k,i]of[['recu','m_recu'],['avec','m_avec'],['benef','m_benef']]){if(!/^\d+$/.test(g(i)))return err("Tous les champs sont obligatoires (chiffres uniquement).");d[k]=+g(i)}
+ for(const[k,i]of[['recu','m_recu'],['avec','m_avec'],['aj','m_aj'],['benef','m_benef']]){if(!/^\d+$/.test(g(i)))return err("Tous les champs sont obligatoires (chiffres uniquement).");d[k]=+g(i)}
  if(d.avec>d.recu)return err("Avec carte CMU ne peut pas dépasser Patient reçu.");
+ if(d.aj>d.avec)return err("Carte à jour ne peut pas dépasser Avec carte CMU.");
  if(d.benef>d.avec)return err("Ayant bénéficié ne peut pas dépasser Avec carte CMU.");
  d.sans=d.recu-d.avec;d.sansb=d.avec-d.benef;
  if(editing){const r=DB.records.find(r=>r.id==editing);r.d=d;r.dirty=Date.now()}
@@ -252,9 +251,9 @@ function cmu(p){cmuP=p;cur='cmu';const R=mine('cmu'),sm=k=>R.reduce((a,r)=>a+(+r
  if(p=='dash'){const t=sm('recu'),a=sm('avec'),s=sm('sans');
   m.innerHTML=tabs+`<h2 class="noprint">💳 CMU – Tableau de bord</h2><div class="grid" style="grid-template-columns:repeat(2,1fr);min-height:calc(100vh - 280px)">${[['👥','Total patients',t],['✅','Avec CMU',a],['❌','Sans CMU',s],['📊','Taux de couverture CMU',pc(a,t)]].map(([i,l,v])=>`<div class="tile" style="cursor:default"><span>${i}</span>${l}<b style="font-size:2.4rem">${v}</b></div>`).join('')}</div>`}
  else if(p=='form'){const v=editing?DB.records.find(r=>r.id==editing).d:{},n=(id,l,x)=>`<div><label>${l}</label><input id="${id}" inputmode="numeric" value="${E(x??'')}" oninput="cmuNum(this)"></div>`;
-  m.innerHTML=tabs+`<h2>Enregistrer</h2><div class="f"><div><label>Date</label><input type="date" id="m_date" min="${yr()}-01-01" max="${yr()}-12-31" value="${v.date||today()}"></div>${n('m_recu','Patient reçu',v.recu)}${n('m_avec','Avec carte CMU',v.avec)}<div><label>Sans carte CMU (calcul automatique)</label><input id="m_sans" readonly value="${E(v.sans??'')}"></div>${n('m_benef','Ayant bénéficié',v.benef)}<div><label>Sans bénéficié (calcul automatique)</label><input id="m_sansb" readonly value="${E(v.sansb??'')}"></div></div><button class="btn gr" onclick="cmuSave()">${editing?'Mettre à jour':'Enregistrer'}</button><div id="le" style="color:#c93a2a"></div>`}
+  m.innerHTML=tabs+`<h2>Enregistrer</h2><div class="f"><div><label>Date</label><input type="date" id="m_date" min="${yr()}-01-01" max="${yr()}-12-31" value="${v.date||today()}"></div>${n('m_recu','Patient reçu',v.recu)}${n('m_avec','Avec carte CMU',v.avec)}${n('m_aj','Carte à jour',v.aj)}${n('m_benef','Ayant bénéficié',v.benef)}</div><button class="btn gr" onclick="cmuSave()">${editing?'Mettre à jour':'Enregistrer'}</button><div id="le" style="color:#c93a2a"></div>`}
  else if(p=='reg'){const rs=[...R].sort((a,b)=>b.d.date.localeCompare(a.d.date)||b.ts-a.ts);
-  m.innerHTML=tabs+`<h2>Registre CMU</h2><div class="wrap"><table><tr><th>Date</th><th>Patient reçu</th><th>Avec carte CMU</th><th>Sans carte CMU</th><th>Ayant bénéficié</th><th>Sans bénéficié</th><th>Taux CMU</th><th>Taux bénéficiant</th><th>Actions</th></tr>${rs.map(r=>{const d=r.d;return`<tr><td>${fd(d.date)}</td><td>${d.recu}</td><td>${d.avec}</td><td>${d.sans}</td><td>${d.benef}</td><td>${d.sansb}</td><td>${pc(d.avec,d.recu)}</td><td>${pc(d.benef,d.avec)}</td><td>${!locked(r)&&r.uid==ME.id?`<button class="btn sm gr" onclick="editing='${r.id}';cmu('form')">✎</button><button class="btn sm rd" onclick="delRec('${r.id}')">🗑</button>`:locked(r)?(ME.role=='super'?`<button class="btn sm" onclick="unlock('${r.id}')">🔓</button>`:'🔒'):''}</td></tr>`}).join('')}</table></div>`}
+  m.innerHTML=tabs+`<h2>Registre CMU</h2><div class="wrap"><table><tr><th>Date</th><th>Patient reçu</th><th>Avec carte CMU</th><th>Sans carte CMU</th><th>Carte à jour</th><th>Carte non à jour</th><th>Ayant bénéficié</th><th>Sans bénéficié</th><th>Taux CMU</th><th>Taux bénéficiant</th><th>Actions</th></tr>${rs.map(r=>{const d=r.d;return`<tr><td>${fd(d.date)}</td><td>${d.recu}</td><td>${d.avec}</td><td>${d.sans}</td><td>${d.aj??'—'}</td><td>${d.sansb}</td><td>${d.benef}</td><td>${d.sansb}</td><td>${pc(d.avec,d.recu)}</td><td>${pc(d.benef,d.avec)}</td><td>${!locked(r)&&r.uid==ME.id?`<button class="btn sm gr" onclick="editing='${r.id}';cmu('form')">✎</button><button class="btn sm rd" onclick="delRec('${r.id}')">🗑</button>`:locked(r)?(ME.role=='super'?`<button class="btn sm" onclick="unlock('${r.id}')">🔓</button>`:'🔒'):''}</td></tr>`}).join('')}</table></div>`}
  else{const e=new Date(),k=cmuR,b=k=='trimestriel'?2:5,s0=new Date(e.getFullYear(),e.getMonth()-b,1),iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
   const fl=k=='mensuel'?`<div><label>Mois</label><input type="month" id="rp_m" min="${yr()}-01" max="${yr()}-12" value="${iso(e).slice(0,7)}"></div>`:k=='annuel'?`<div><label>Année</label><input type="number" id="rp_y" min="2000" max="2100" value="${yr()}"></div>`:`<div><label>Début</label><input type="date" id="rp_s" value="${iso(s0)}"></div><div><label>Fin</label><input type="date" id="rp_e" value="${iso(e)}"></div>`;
   m.innerHTML=tabs+`<div class="noprint"><h2>Rapport CMU</h2>${['mensuel','trimestriel','semestriel','annuel'].map(x=>`<button class="btn ${k==x?'':'gr'}" onclick="cmuR='${x}';cmu('rap')">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}<div class="f" style="margin-top:6px">${fl}</div><button class="btn" onclick="cmuRap()">Générer</button><button class="btn gr" onclick="print()">Imprimer / PDF</button></div><div id="rapc"></div>`;cmuRap()}}
@@ -266,7 +265,7 @@ function cmuRap(){const g=i=>$('#'+i)?$('#'+i).value:'',k=cmuR;let s,e,lab;
  const R=mine('cmu').filter(r=>r.d.date>=s&&r.d.date<=e).sort((a,b)=>a.d.date.localeCompare(b.d.date)),sm=x=>R.reduce((a,r)=>a+(+r.d[x]||0),0),C=cen(ME.centre),t=sm('recu'),a=sm('avec'),bn=sm('benef');
  $('#rapc').innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center"><img src="icon-192.png" alt="SGDS" height="70"><div style="text-align:center"><h2 style="margin:0">RAPPORT CMU ${k.toUpperCase()}</h2><b>${lab}</b></div><img src="icon-ci.png" alt="" height="70"></div>
 <p>Établissement : <b>${E(C.nom)}</b> – Code : <b>${E(C.code)}</b> – District : <b>${E(C.district||'')}</b> – Région : <b>${E(C.region||'')}</b><br>Établi par : ${E(ME.nom+' '+ME.prenoms)}</p>
-<div class="wrap"><table><tr><th>Date</th><th>Patient reçu</th><th>Avec carte CMU</th><th>Sans carte CMU</th><th>Ayant bénéficié</th><th>Sans bénéficié</th><th>Taux couverture</th><th>Taux bénéficiant</th></tr>${R.map(r=>{const d=r.d;return`<tr><td>${fd(d.date)}</td><td>${d.recu}</td><td>${d.avec}</td><td>${d.sans}</td><td>${d.benef}</td><td>${d.sansb}</td><td>${pc(d.avec,d.recu)}</td><td>${pc(d.benef,d.avec)}</td></tr>`}).join('')||'<tr><td colspan="8">Aucune donnée sur cette période.</td></tr>'}<tr style="font-weight:700"><td>TOTAL</td><td>${t}</td><td>${a}</td><td>${sm('sans')}</td><td>${bn}</td><td>${sm('sansb')}</td><td>${pc(a,t)}</td><td>${pc(bn,a)}</td></tr></table></div>`}
+<div class="wrap"><table><tr><th>Date</th><th>Patient reçu</th><th>Avec carte CMU</th><th>Sans carte CMU</th><th>Carte à jour</th><th>Carte non à jour</th><th>Ayant bénéficié</th><th>Sans bénéficié</th><th>Taux couverture</th><th>Taux bénéficiant</th></tr>${R.map(r=>{const d=r.d;return`<tr><td>${fd(d.date)}</td><td>${d.recu}</td><td>${d.avec}</td><td>${d.sans}</td><td>${d.aj??'—'}</td><td>${d.sansb}</td><td>${d.benef}</td><td>${d.sansb}</td><td>${pc(d.avec,d.recu)}</td><td>${pc(d.benef,d.avec)}</td></tr>`}).join('')||'<tr><td colspan="10">Aucune donnée sur cette période.</td></tr>'}<tr style="font-weight:700"><td>TOTAL</td><td>${t}</td><td>${a}</td><td>${sm('sans')}</td><td>${sm('aj')}</td><td>${sm('sansb')}</td><td>${bn}</td><td>${sm('sansb')}</td><td>${pc(a,t)}</td><td>${pc(bn,a)}</td></tr></table></div>`}
 /* Rapport SIG */
 function report(months){const e=new Date(),s=new Date(e.getFullYear(),e.getMonth()-months+1,1);const iso=d=>new Date(d.getTime()-d.getTimezoneOffset()*6e4).toISOString().slice(0,10);
  $('#main').innerHTML=`<div class="noprint"><h2>Rapport SIG</h2><div class="f"><div><label>Du</label><input type="date" id="r_s" value="${iso(s)}"></div><div><label>Au</label><input type="date" id="r_e" value="${iso(e)}"></div>
