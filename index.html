@@ -2,7 +2,7 @@
 <html lang="fr"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SYSTEME DE GESTION DE DONNEES SANITAIRES</title>
- <meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
+<meta name="description" content="SGDS est une solution dédiée à la génération et à la centralisation des rapports du Système d'Information de Gestion (SIG) sanitaire. Elle permet aux structures de santté de collecter, cencolider et transmettre leurs indicateurs périodiques de manière simple, rapide.">
 <link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#1e5e2f">
 <link rel="icon" type="image/png" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="SGDS">
@@ -92,15 +92,16 @@ async function init(){
  if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
  const s=sessionStorage.getItem('disk_me');if(s)ME=DB.users.find(u=>u.id==s)||null;
  ME?shell():login();
- addEventListener('popstate',()=>{if(ME){editing=null;go('home',1)}});addEventListener('online',()=>{stat();sync()});addEventListener('offline',()=>stat());setInterval(()=>sync(),60000);
+ addEventListener('popstate',()=>{if(ME){editing=null;go('home',1)}});addEventListener('online',()=>stat());addEventListener('offline',()=>stat());
 }
 /* ====== SYNCHRONISATION ====== */
 async function pullAll(t,since){let out=[],i=0;for(;;){let q=sb.from(t).select('*');if(since)q=q.gt('updated_at',since);
  const{data,error}=await q.order('updated_at').order('id').range(i,i+999);if(error)throw error;out.push(...data);if(data.length<1000)break;i+=1000}return out}
-async function sync(){
- if(!sb||!navigator.onLine||!ME||syncing)return;
+async function pullRef(){if(!sb||!navigator.onLine||!ME)return;try{const[c,p]=await Promise.all([pullAll('centres'),pullAll('profiles')]),u=p.map(toUser);DB.centres=c;if(ME.role=='super')DB.users=u;else u.forEach(x=>{const i=DB.users.findIndex(y=>y.id==x.id);i<0?DB.users.push(x):DB.users[i]=x});ME=DB.users.find(x=>x.id==ME.id)||ME;save()}catch(e){console.error(e)}}
+async function sync(man){const say=m=>{if(man)alert(m)};
+ if(!sb||!ME||syncing)return;if(!navigator.onLine)return say("Pas de connexion internet. Vos données restent enregistrées sur ce téléphone.");
  const{data:{session}}=await sb.auth.getSession();
- if(!session||session.user.id!=ME.id)return stat('⚠ Reconnectez-vous en ligne pour synchroniser');
+ if(!session||session.user.id!=ME.id){say("Reconnectez-vous en ligne (déconnexion puis connexion) pour synchroniser.");return stat('⚠ Reconnectez-vous en ligne pour synchroniser')}
  {const{data:me}=await sb.from('profiles').select('actif').eq('id',ME.id).maybeSingle();if(me&&me.actif===false){const u=DB.users.find(x=>x.id==ME.id);if(u)u.actif=false;save();alert("Votre compte a été désactivé. Contactez l’administrateur.");return logout()}}
  syncing=true;stat('⏳ Synchronisation…');
  try{
@@ -111,8 +112,9 @@ async function sync(){
   const rows=await pullAll('records',DB.last),idx=new Map(DB.records.map(r=>[r.id,r]));
   for(const row of rows){const l=idx.get(row.id);if(l&&l.dirty)continue;const n=toRec(row);if(l)Object.assign(l,n);else DB.records.push(n);if(!DB.last||row.updated_at>DB.last)DB.last=row.updated_at}
   ME=DB.users.find(u=>u.id==ME.id)||ME;save();stat();if(['home'].indexOf(view)<0&&MODS[view])mod(view);else if((view=='cmu'||view=='home'&&isCmu())&&['dash','reg'].includes(cmuP))cmu(cmuP)
- }catch(e){console.error(e);stat('⚠ Erreur de synchronisation')}finally{syncing=false}}
-function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRES</div><div></div></div>
+ 
+ ;say("Synchronisation terminée ✔")}catch(e){console.error(e);stat('⚠ Erreur de synchronisation');say("Erreur de synchronisation. Vérifiez votre connexion et réessayez.")}finally{syncing=false}}
+function login(){ME=null;$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div></div></div>
 <div class="login"><div class="card"><div style="text-align:center"><img src="icon-192.png" alt="SGDS" width="110" height="110"></div><h2 style="text-align:center">Connexion au portail</h2>
 <label>Nom d’utilisateur</label><input id="lu" autocomplete="username" placeholder="Ex: AAA195">
 <label>Mot de passe</label><input id="lp" type="password" autocomplete="current-password" placeholder="••••••••">
@@ -131,7 +133,7 @@ async function doLogin(){const un=lu.value.trim().toLowerCase(),pw=lp.value,h=aw
  const u=DB.users.find(x=>x.username.toLowerCase()==un);
  if(u&&u.actif===false)return err("Compte désactivé. Contactez l’administrateur.");if(!u||A[un]!=h)return err(sb&&navigator.onLine?"Connexion impossible.":"Hors ligne : une première connexion en ligne est nécessaire sur cet appareil.");
  start(u)}
-function start(u){ME=u;sessionStorage.setItem('disk_me',u.id);u.must?chpw():(go('home'),sync())}
+async function start(u){ME=u;sessionStorage.setItem('disk_me',u.id);if(u.must)return chpw();await pullRef();go('home');sync()}
 function chpw(){$('#app').innerHTML=`<div class="bar"><div></div><div class="t">SGDS – Changer le mot de passe pour la sécurité de votre espace de travail</div><div></div></div><div class="login"><div class="card">
 <label>Ancien mot de passe</label><input id="p0" type="password" placeholder="••••••••">
 <label style="font-weight:400"><input type="checkbox" style="width:auto" onchange="p0.type=this.checked?'text':'password'"> Voir</label>
@@ -147,16 +149,16 @@ async function doPw(){const e=m=>$('#le').textContent=m;
  if(p1.value!=p2.value)return e("La confirmation ne correspond pas.");
  if(p1.value==PW0)return e("Choisissez un mot de passe différent du standard.");
  const{error:y}=await sb.auth.updateUser({password:p1.value});if(y)return e(y.message);
- await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();go('home');sync()}
+ await sb.rpc('cisk_pw_done');ME.must=false;DB.auth[ME.username.toLowerCase()]=await hash(ME.username.toLowerCase()+':'+p1.value);save();await pullRef();go('home');sync()}
 const cen=id=>DB.centres.find(c=>c.id==id)||{};
 function shell(){$('#app').innerHTML=`<div class="bar"><div><button class="ham" onclick="drw.classList.toggle('open')">☰</button></div>
-<div class="t">SYSTEME DE GESTION DE DONNEES SANITAIRES</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
-<div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync()">Synchroniser</button></div>
+<div class="t">SYSTEME DE GESTION DE DONNES SANITAIRE</div><div class="u">👨 ${E(ME.nom+' '+ME.prenoms)}<small>${E(cen(ME.centre).nom)}</small></div></div>
+<div class="band"><span class="pill" id="st"></span><button class="btn sm" onclick="sync(true)">Synchroniser</button></div>
 <div class="drawer" id="drw">${[['rep6','Rapport SIG'],['rep3','Bilan trimestriel'],['rep6','Bilan semestriel'],['rep12','Bilan annuel']].map(([v,t],i)=>`<a onclick="go('${v}')">${t}</a>`).join('')}
 ${ME.role=='super'?`<a onclick="go('centres')">Gestion centres</a><a onclick="go('users')">Gestion utilisateurs</a>`:''}
 <a onclick="go('home')">Tableau de bord</a><a onclick="logout()">Déconnexion</a></div><div id="back" class="noprint" style="padding:8px 14px 0;display:none"><button class="btn" onclick="back()">← Retour</button></div><main id="main"></main>`;if(isCmu())drw.innerHTML=[['dash','Tableau de bord'],['form','Enregistrer'],['reg','Voir le registre'],['rap','Rapport']].map(([k,t])=>`<a onclick="${k=='dash'?"go('home')":`cmuGo('${k}')`}">${t}</a>`).join('')+'<a onclick="logout()">Déconnexion</a>';else drw.insertAdjacentHTML('afterbegin','<a onclick="cmuGo(\'dash\')">💳 CMU</a>');stat();go(view)}
 function stat(t){const s=$('#st');if(!s)return;const o=navigator.onLine&&!!sb,n=DB.records.filter(r=>r.dirty).length;
- s.className='pill '+(o?'on':'off');s.textContent=t||(o?(n?`⚫ Online – ${n} en attente`:'⚫ Online – Synchronisé'):`⚫ Offline – ${n} en attente`)}
+ s.className='pill '+(o?'on':'off');s.textContent=t||(o?(n?`⚫ Online – ${n} à synchroniser`:'⚫ Online – Synchronisé'):`⚫ Offline – ${n} en attente`)}
 function logout(){sessionStorage.removeItem('disk_me');ME=null;view='home';login()}
 function back(){if(editing&&view=='cmu'){editing=null;cmu('reg')}else if(editing&&MODS[view]){editing=null;mod(view)}else if(!editing&&(view=='vita'||view=='mil'))go('milda');else go('home')}
 function go(v,np){if(!ME)return;if(isCmu()&&v!='home'&&v!='cmu')v='home';view=v;if(!$('#main'))return shell();drw.classList.remove('open');editing=null;
@@ -195,10 +197,10 @@ function saveRec(){const M=MODS[cur],d={};
  const tr=M.tr?M.tr(d.age):'';
  if(editing){const r=DB.records.find(r=>r.id==editing);r.d=d;r.tr=tr;r.dirty=Date.now()}
  else DB.records.push({id:nid(),mod:cur,centre:ME.centre,uid:ME.id,ts:Date.now(),d,tr,dirty:Date.now()});
- save();editing=null;mod(cur);stat();sync()}
-function delRec(id){if(confirm("Supprimer cette ligne ?")){const r=DB.records.find(r=>r.id==id);r.deleted=true;r.dirty=Date.now();save();cur=='cmu'?cmu('reg'):mod(cur);sync()}}
+ save();editing=null;mod(cur);stat()}
+function delRec(id){if(confirm("Supprimer cette ligne ?")){const r=DB.records.find(r=>r.id==id);r.deleted=true;r.dirty=Date.now();save();cur=='cmu'?cmu('reg'):mod(cur);stat()}}
 function unlock(id){const m=prompt("Motif du déverrouillage (obligatoire) :");if(!m||!m.trim())return;
- const r=DB.records.find(r=>r.id==id);r.unl=true;r.log=[...(r.log||[]),{by:ME.username,at:new Date().toISOString(),motif:m}];r.dirty=Date.now();save();cur=='cmu'?cmu('reg'):mod(cur);sync()}
+ const r=DB.records.find(r=>r.id==id);r.unl=true;r.log=[...(r.log||[]),{by:ME.username,at:new Date().toISOString(),motif:m}];r.dirty=Date.now();save();cur=='cmu'?cmu('reg'):mod(cur);stat()}
 /* Centres */
 function centres(){const c=editing?DB.centres.find(x=>x.id==editing):{};
  $('#main').innerHTML=`<h2>Gestion des centres</h2><div class="f">${[['nom','Nom de l’établissement'],['code','Code de l’établissement'],['pop','Population'],['region','Région sanitaire'],['district','District sanitaire']].map(([k,l])=>`<div><label>${l}</label><input id="c_${k}" value="${E(c[k]||'')}"></div>`).join('')}</div>
@@ -207,9 +209,9 @@ ${DB.centres.map(c=>`<tr><td>${E(c.nom)}</td><td>${E(c.code)}</td><td>${E(c.pop)
 const NEED="Connexion internet requise pour cette opération.";
 async function saveCen(){const o={};['nom','code','pop','region','district'].forEach(k=>o[k]=$('#c_'+k).value.trim());if(!o.nom)return alert("Nom obligatoire");
  if(!sb||!navigator.onLine)return alert(NEED);o.pop=+o.pop||0;if(editing)o.id=editing;
- const{error}=await sb.from('centres').upsert(o);if(error)return alert(error.message);editing=null;await sync();centres()}
+ const{error}=await sb.from('centres').upsert(o);if(error)return alert(error.message);editing=null;await pullRef();centres()}
 async function delCen(id){if(DB.users.some(u=>u.centre==id))return alert("Ce centre a des utilisateurs.");if(!sb||!navigator.onLine)return alert(NEED);
- if(confirm("Supprimer ?")){const{error}=await sb.from('centres').delete().eq('id',id);if(error)return alert(error.message);await sync();centres()}}
+ if(confirm("Supprimer ?")){const{error}=await sb.from('centres').delete().eq('id',id);if(error)return alert(error.message);await pullRef();centres()}}
 /* Utilisateurs */
 function users(){$('#main').innerHTML=`<h2>Gestion des utilisateurs</h2><div class="f">
 <div><label>Centre</label><select id="u_c">${DB.centres.map(c=>`<option value="${c.id}">${E(c.nom)}</option>`).join('')}</select></div>
@@ -222,14 +224,14 @@ async function saveUser(){const g=k=>$('#u_'+k).value.trim(),nom=g('nom'),tel=g(
  if(!sb||!navigator.onLine)return alert(NEED);
  let un=nom[0].toUpperCase()+nom.slice(1).toLowerCase()+tel.slice(-3);if(DB.users.some(u=>u.username.toLowerCase()==un.toLowerCase()))return alert("Nom d’utilisateur déjà utilisé : "+un);
  const{error}=await sb.rpc('sgds_create_user',{p_username:un,p_password:PW0,p_centre:g('c'),p_nom:nom,p_prenoms:g('prenoms'),p_tel:g('tel'),p_email:g('email'),p_fonction:g('fonction')});
- if(error)return alert(error.message);await sync();
+ if(error)return alert(error.message);await pullRef();
  const msg=`SGDS– Portail officiel\nBonjour ${nom} ${g('prenoms')},\nVotre accès au portail SGDS a été créé.\nCentre : ${cen(g('c')).nom}\nNom d’utilisateur : ${un}\nMot de passe : ${PW0}\nVeuillez changer votre mot de passe à la première connexion.\nLien : ${location.href}`;
  window._msg=msg;const d=document.createElement('div');d.className='modal';d.innerHTML=`<div><b>Envoyer les identifiants</b>\n\n${E(msg)}\n\n<a class="btn" href="sms:${tel}?body=${encodeURIComponent(msg)}">SMS</a><a class="btn gr" target="_blank" rel="noopener" href="https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(g('email'))}&su=${encodeURIComponent('SGDS – Accès au portail')}&body=${encodeURIComponent(msg)}">Gmail</a><a class="btn gr" target="_blank" rel="noopener" href="https://wa.me/${/^0\d{9}$/.test(tel)?'225'+tel:tel}?text=${encodeURIComponent(msg)}">WhatsApp</a><button class="btn" onclick="navigator.clipboard.writeText(window._msg).then(()=>this.textContent='Copié ✓').catch(()=>prompt('Copiez le message :',window._msg))">Copier le message</button><button class="btn rd" onclick="this.closest('.modal').remove();users()">Fermer</button></div>`;document.body.appendChild(d)}
 async function resetPw(id){if(!sb||!navigator.onLine)return alert(NEED);const{error}=await sb.rpc('cisk_reset_password',{p_user:id});alert(error?error.message:"Mot de passe remis à "+PW0+".")}
 async function setActive(id,on){if(!sb||!navigator.onLine)return alert(NEED);
  if(!confirm(on?"Réactiver ce compte ?":"Désactiver ce compte ? L’utilisateur ne pourra plus se connecter, mais ses données seront conservées."))return;
- const{error}=await sb.rpc('sgds_set_active',{p_user:id,p_actif:on});if(error)return alert(error.message);await sync();users()}
-async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confirm("Supprimer DÉFINITIVEMENT ce compte ? Cette action est irréversible. Pour une suspension temporaire, utilisez « Désactiver ».")){const{error}=await sb.rpc('cisk_delete_user',{p_user:id});if(error)return alert(error.message);await sync();users()}}
+ const{error}=await sb.rpc('sgds_set_active',{p_user:id,p_actif:on});if(error)return alert(error.message);await pullRef();users()}
+async function delUser(id){if(!sb||!navigator.onLine)return alert(NEED);if(confirm("Supprimer DÉFINITIVEMENT ce compte ? Cette action est irréversible. Pour une suspension temporaire, utilisez « Désactiver ».")){const{error}=await sb.rpc('cisk_delete_user',{p_user:id});if(error)return alert(error.message);await pullRef();users()}}
 /* ====== MODULE CMU ====== */
 let cmuP='dash',cmuR='mensuel';
 const isCmu=()=>!!ME&&ME.fonction=='Agent CMU',cmuGo=p=>{cmuP=p;go('cmu')},fd=d=>String(d||'').split('-').reverse().join('/');
@@ -245,7 +247,7 @@ function cmuSave(){const g=i=>$('#'+i).value.trim(),d={date:g('m_date')},err=m=>
  d.sans=d.recu-d.avec;d.sansb=d.avec-d.benef;
  if(editing){const r=DB.records.find(r=>r.id==editing);r.d=d;r.dirty=Date.now()}
  else DB.records.push({id:nid(),mod:'cmu',centre:ME.centre,uid:ME.id,ts:Date.now(),d,tr:'',dirty:Date.now()});
- save();editing=null;stat();sync();cmu('reg')}
+ save();editing=null;stat();cmu('reg')}
 function cmu(p){cmuP=p;cur='cmu';const R=mine('cmu'),sm=k=>R.reduce((a,r)=>a+(+r.d[k]||0),0),m=$('#main');
  const tabs=`<div class="noprint">${[['dash','Tableau de bord'],['form','Enregistrer'],['reg','Voir le registre'],['rap','Rapport']].map(([k,t])=>`<button class="btn ${p==k?'':'gr'}" onclick="editing=null;cmu('${k}')">${t}</button>`).join('')}</div>`;
  if(p=='dash'){const t=sm('recu'),a=sm('avec'),s=sm('sans');
